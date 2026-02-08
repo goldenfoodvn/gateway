@@ -1,0 +1,33 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sapalens Platform (POC)</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header><h1>Sapalens Platform — POC UI</h1></header>
+  <main>
+    <section>
+      <button id="btn-health">Kiểm tra /health</button>
+      <pre id="health-res">chưa gọi</pre>
+    </section>
+    <section>
+      <label>Fake token:</label>
+      <input id="token-input" placeholder="u-test-1" />
+      <button id="btn-me">Gọi /me</button>
+      <pre id="me-res">chưa gọi</pre>
+    </section>
+    <section>
+      <label>IDP:</label>
+      <input id="idpProvider" value="auth0" />
+      <label>IDP user:</label>
+      <input id="idpUserId" value="u-test-1" />
+      <button id="btn-webhook">Gọi webhook</button>
+      <pre id="webhook-res">chưa gọi</pre>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
