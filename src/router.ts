@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sapalens API Gateway
  * Main entry point
  */
