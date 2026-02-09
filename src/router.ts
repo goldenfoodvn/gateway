@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import morgan from 'morgan';
 
 import config from './config/index.js';
+import RedisManager from './config/redis.js';
 import {
   corsMiddleware,
   errorHandler,
@@ -113,6 +114,12 @@ app.use(errorHandler);
 // ===========================
 const PORT = config.port;
 
+// Initialize Redis
+RedisManager.connect().catch(err => {
+  console.error('[router] Failed to connect to Redis:', err.message);
+  console.warn('[router] Some features will be disabled without Redis');
+});
+
 const server = app.listen(PORT, () => {
   console.log(`🚀 Gateway is running on port ${PORT}`);
   console.log(`📍 Environment: ${config.env}`);
@@ -124,6 +131,14 @@ const server = app.listen(PORT, () => {
 // ===========================
 function shutdown(signal: string) {
   console.log(`[router] Received ${signal}, shutting down...`);
+  
+  // Disconnect Redis
+  RedisManager.disconnect().then(() => {
+    console.log('[router] Redis disconnected');
+  }).catch(() => {
+    console.log('[router] Redis disconnect skipped (not connected)');
+  });
+  
   server.close((err) => {
     if (err) {
       console.error('[router] Error during shutdown', err);

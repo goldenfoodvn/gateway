@@ -1,6 +1,7 @@
 ﻿import type { Request, Response, NextFunction } from 'express';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import config from '../config/index.js';
+import TokenService from '../auth/token.service.js';
 
 let remoteJWKSet: ReturnType<typeof createRemoteJWKSet> | null = null;
 
@@ -14,8 +15,20 @@ if (config.auth.jwksUri) {
   console.warn('[auth] AUTH_JWKS_URI not set');
 }
 
+export interface ExtendedJWTPayload extends JWTPayload {
+  userId?: string;
+  email?: string;
+  sessionId?: string;
+  roles?: string[];
+  deviceId?: string;
+  deviceName?: string;
+  deviceType?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 export interface AuthRequest extends Request {
-  user?: JWTPayload;
+  user?: ExtendedJWTPayload;
 }
 
 function unauthorized(res: Response, message = 'Unauthorized') {
@@ -47,6 +60,14 @@ export async function authMiddleware(
     if (config.auth.issuer) verifyOptions.issuer = config.auth.issuer;
 
     const { payload } = await jwtVerify(token, remoteJWKSet, verifyOptions);
+    
+    // Check if token is blacklisted
+    const isBlacklisted = await TokenService.isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      unauthorized(res, 'Token has been revoked');
+      return;
+    }
+    
     req.user = payload;
     
     next();
