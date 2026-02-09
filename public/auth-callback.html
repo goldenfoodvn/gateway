@@ -22,14 +22,19 @@
     if (error) {
       document.getElementById('status').textContent = 'Đăng nhập thất bại: ' + error;
       setTimeout(() => window.location.href = '/', 3000);
-    } else if (accessToken) {
-      // Store tokens
+    } else if (accessToken && refreshToken) {
+      // Store tokens with validation
+      const expiresIn = params.get('expires_in');
+      const expiryTime = expiresIn && !isNaN(parseInt(expiresIn)) 
+        ? Date.now() + parseInt(expiresIn) * 1000 
+        : Date.now() + 3600 * 1000; // Default 1 hour
+      
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('tokenExpiry', Date.now() + parseInt(params.get('expires_in')) * 1000);
-      localStorage.setItem('userEmail', params.get('email'));
-      localStorage.setItem('userName', params.get('name'));
-      localStorage.setItem('authProvider', params.get('provider'));
+      localStorage.setItem('tokenExpiry', expiryTime.toString());
+      localStorage.setItem('userEmail', params.get('email') || '');
+      localStorage.setItem('userName', params.get('name') || '');
+      localStorage.setItem('authProvider', params.get('provider') || '');
       
       document.getElementById('status').textContent = '✅ Đăng nhập thành công!';
       setTimeout(() => window.location.href = '/', 1000);

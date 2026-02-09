@@ -86,7 +86,7 @@ async function handleOAuthCallback(
 
   // Redirect to frontend with tokens in URL hash (more secure than query params)
   const redirectUrl = new URL('/auth/callback', config.frontendUrl);
-  redirectUrl.hash = `access_token=${tokenPair.accessToken}&refresh_token=${tokenPair.refreshToken}&expires_in=${tokenPair.expiresIn}&token_type=Bearer&provider=${socialProfile.provider}&email=${encodeURIComponent(socialProfile.email)}&name=${encodeURIComponent(socialProfile.name || '')}`;
+  redirectUrl.hash = `access_token=${encodeURIComponent(tokenPair.accessToken)}&refresh_token=${encodeURIComponent(tokenPair.refreshToken)}&expires_in=${tokenPair.expiresIn}&token_type=Bearer&provider=${encodeURIComponent(socialProfile.provider)}&email=${encodeURIComponent(socialProfile.email)}&name=${encodeURIComponent(socialProfile.name || '')}`;
   
   res.redirect(redirectUrl.toString());
 }
