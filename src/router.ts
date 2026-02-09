@@ -69,6 +69,18 @@ app.use(passport.initialize());
 app.use(express.static(publicPath));
 
 // ===========================
+// SPA FALLBACK ROUTES (before API routes)
+// ===========================
+app.get('/auth/callback', (_req, res) => {
+  const callbackPath = path.join(publicPath as string, 'auth-callback.html');
+  if (fs.existsSync(callbackPath)) {
+    res.sendFile(callbackPath);
+  } else {
+    res.status(404).json({ error: 'auth_callback_not_found' });
+  }
+});
+
+// ===========================
 // API ROUTES
 // ===========================
 app.use('/', routes);
