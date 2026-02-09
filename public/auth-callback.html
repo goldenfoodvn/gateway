@@ -152,7 +152,12 @@
         detailsText = 'Có lỗi xảy ra khi xác thực với Facebook.';
       } else if (errorMessage) {
         errorText = 'Lỗi OAuth';
-        detailsText = decodeURIComponent(errorMessage);
+        try {
+          detailsText = decodeURIComponent(errorMessage);
+        } catch (e) {
+          console.error('[OAuth Callback] Failed to decode error message:', e);
+          detailsText = 'Có lỗi xảy ra khi xác thực.';
+        }
       }
       
       document.getElementById('error-message').textContent = errorText;
@@ -193,8 +198,11 @@
           localStorage.setItem('authProvider', provider);
         }
         if (expiresIn) {
-          const expiryTime = Date.now() + parseInt(expiresIn) * 1000;
-          localStorage.setItem('tokenExpiry', expiryTime.toString());
+          const expiresInNum = parseInt(expiresIn, 10);
+          if (!isNaN(expiresInNum) && expiresInNum > 0) {
+            const expiryTime = Date.now() + expiresInNum * 1000;
+            localStorage.setItem('tokenExpiry', expiryTime.toString());
+          }
         }
         
         console.log('[OAuth Callback] Tokens stored successfully');
