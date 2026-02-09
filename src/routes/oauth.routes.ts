@@ -7,6 +7,7 @@ import SessionService from '../auth/session.service.js';
 import type { SocialProfile } from '../auth/oauth/oauth.service.js';
 import logger from '../utils/logger.js';
 import { authRateLimiter } from '../middlewares/rate-limiter.middleware.js';
+import config from '../config/index.js';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ async function handleOAuthCallback(
 ): Promise<void> {
   if (!socialProfile || !socialProfile.email) {
     logger.error(`${socialProfile?.provider || 'OAuth'}: No profile or email`);
-    res.redirect('/auth/login?error=no_email');
+    res.redirect('/auth/callback#error=no_email');
     return;
   }
 
@@ -83,24 +84,11 @@ async function handleOAuthCallback(
     email: socialProfile.email 
   });
 
-  // Return tokens in response
-  // NOTE: Refresh token is returned in JSON response for simplicity.
-  // For production, consider using httpOnly cookies to reduce XSS risk.
-  res.json({
-    ok: true,
-    data: {
-      accessToken: tokenPair.accessToken,
-      refreshToken: tokenPair.refreshToken,
-      expiresIn: tokenPair.expiresIn,
-      tokenType: 'Bearer',
-      user: {
-        email: socialProfile.email,
-        name: socialProfile.name,
-        avatar: socialProfile.avatar,
-        provider: socialProfile.provider
-      }
-    }
-  });
+  // Redirect to frontend with tokens in URL hash (more secure than query params)
+  const redirectUrl = new URL('/auth/callback', config.frontendUrl);
+  redirectUrl.hash = `access_token=${encodeURIComponent(tokenPair.accessToken)}&refresh_token=${encodeURIComponent(tokenPair.refreshToken)}&expires_in=${tokenPair.expiresIn}&token_type=Bearer&provider=${encodeURIComponent(socialProfile.provider)}&email=${encodeURIComponent(socialProfile.email)}&name=${encodeURIComponent(socialProfile.name || '')}`;
+  
+  res.redirect(redirectUrl.toString());
 }
 
 // ===========================
@@ -128,14 +116,14 @@ router.get(
   '/auth/google/callback',
   passport.authenticate('google', { 
     session: false,
-    failureRedirect: '/auth/login?error=google_auth_failed'
+    failureRedirect: '/auth/callback#error=google_auth_failed'
   }),
   async (req: Request, res: Response) => {
     try {
       await handleOAuthCallback(req, res, req.user as SocialProfile);
     } catch (error: any) {
       logger.error('Google OAuth callback error', { error: error.message });
-      res.status(500).json({ error: 'OAuth authentication failed' });
+      res.redirect('/auth/callback#error=oauth_failed');
     }
   }
 );
@@ -165,14 +153,14 @@ router.get(
   '/auth/github/callback',
   passport.authenticate('github', { 
     session: false,
-    failureRedirect: '/auth/login?error=github_auth_failed'
+    failureRedirect: '/auth/callback#error=github_auth_failed'
   }),
   async (req: Request, res: Response) => {
     try {
       await handleOAuthCallback(req, res, req.user as SocialProfile);
     } catch (error: any) {
       logger.error('GitHub OAuth callback error', { error: error.message });
-      res.status(500).json({ error: 'OAuth authentication failed' });
+      res.redirect('/auth/callback#error=oauth_failed');
     }
   }
 );
@@ -202,14 +190,14 @@ router.get(
   '/auth/facebook/callback',
   passport.authenticate('facebook', { 
     session: false,
-    failureRedirect: '/auth/login?error=facebook_auth_failed'
+    failureRedirect: '/auth/callback#error=facebook_auth_failed'
   }),
   async (req: Request, res: Response) => {
     try {
       await handleOAuthCallback(req, res, req.user as SocialProfile);
     } catch (error: any) {
       logger.error('Facebook OAuth callback error', { error: error.message });
-      res.status(500).json({ error: 'OAuth authentication failed' });
+      res.redirect('/auth/callback#error=oauth_failed');
     }
   }
 );
