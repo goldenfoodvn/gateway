@@ -3,62 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>OAuth Callback</title>
+  <title>OAuth Callback - Sapalens</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: system-ui, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      margin: 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
     }
     .container {
       background: white;
-      padding: 40px;
-      border-radius: 16px;
+      padding: 48px;
+      border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       text-align: center;
       max-width: 500px;
+      width: 100%;
     }
     .spinner {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #667eea;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      width: 60px;
+      height: 60px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
+      margin: 0 auto 24px;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .success { color: #4caf50; font-size: 48px; }
-    .error { color: #f44336; font-size: 48px; }
-    .message { margin-top: 20px; font-size: 18px; color: #333; }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    .success { color: #4caf50; }
+    .error { color: #f44336; }
+    .message {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    .sub-message {
+      font-size: 14px;
+      color: #666;
+    }
+    .error-details {
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #c62828;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Loading State -->
     <div id="loading">
       <div class="spinner"></div>
       <div class="message">Đang xử lý đăng nhập...</div>
+      <div class="sub-message">Vui lòng đợi trong giây lát</div>
     </div>
+
+    <!-- Success State -->
     <div id="success" style="display:none;">
-      <div class="success">✅</div>
+      <div class="icon success">✅</div>
       <div class="message">Đăng nhập thành công!</div>
-      <div class="message" style="font-size:14px;">Đang chuyển hướng...</div>
+      <div class="sub-message" id="success-email"></div>
+      <div class="sub-message" style="margin-top: 16px;">Đang chuyển hướng về trang chủ...</div>
     </div>
+
+    <!-- Error State -->
     <div id="error" style="display:none;">
-      <div class="error">❌</div>
-      <div class="message" id="error-message">Đăng nhập thất bại</div>
-      <div class="message" style="font-size:14px;">Đang quay lại trang chủ...</div>
+      <div class="icon error">❌</div>
+      <div class="message">Đăng nhập thất bại</div>
+      <div class="sub-message" id="error-message">Đã xảy ra lỗi</div>
+      <div id="error-details" class="error-details" style="display:none;"></div>
+      <div class="sub-message" style="margin-top: 16px;">Đang quay lại trang chủ...</div>
     </div>
   </div>
 
   <script>
+    console.log('[OAuth Callback] Page loaded');
+    console.log('[OAuth Callback] URL:', window.location.href);
+    console.log('[OAuth Callback] Hash:', window.location.hash);
+
     // Parse URL hash
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
@@ -66,63 +104,130 @@
     const error = params.get('error');
     const errorMessage = params.get('message');
     const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const email = params.get('email');
+    const name = params.get('name');
+    const provider = params.get('provider');
+    const expiresIn = params.get('expires_in');
 
+    console.log('[OAuth Callback] Parsed params:', {
+      hasError: !!error,
+      hasAccessToken: !!accessToken,
+      email,
+      name,
+      provider
+    });
+
+    // Handle OAuth callback
     if (error) {
-      // Show error
+      // ERROR CASE
+      console.error('[OAuth Callback] Error received:', error, errorMessage);
+      
       document.getElementById('loading').style.display = 'none';
       document.getElementById('error').style.display = 'block';
       
       let errorText = 'Đăng nhập thất bại';
+      let detailsText = '';
+
       if (error === 'no_email') {
-        errorText = 'Không lấy được email. Vui lòng cấp quyền email.';
+        errorText = 'Không lấy được email';
+        detailsText = 'Vui lòng cấp quyền truy cập email khi đăng nhập.';
       } else if (error === 'google_not_configured') {
         errorText = 'Google OAuth chưa được cấu hình';
+        detailsText = 'Hệ thống chưa được cấu hình để đăng nhập bằng Google. Vui lòng liên hệ quản trị viên.';
       } else if (error === 'github_not_configured') {
         errorText = 'GitHub OAuth chưa được cấu hình';
+        detailsText = 'Hệ thống chưa được cấu hình để đăng nhập bằng GitHub. Vui lòng liên hệ quản trị viên.';
       } else if (error === 'facebook_not_configured') {
         errorText = 'Facebook OAuth chưa được cấu hình';
+        detailsText = 'Hệ thống chưa được cấu hình để đăng nhập bằng Facebook. Vui lòng liên hệ quản trị viên.';
+      } else if (error === 'google_auth_failed') {
+        errorText = 'Xác thực Google thất bại';
+        detailsText = 'Có lỗi xảy ra khi xác thực với Google.';
+      } else if (error === 'github_auth_failed') {
+        errorText = 'Xác thực GitHub thất bại';
+        detailsText = 'Có lỗi xảy ra khi xác thực với GitHub.';
+      } else if (error === 'facebook_auth_failed') {
+        errorText = 'Xác thực Facebook thất bại';
+        detailsText = 'Có lỗi xảy ra khi xác thực với Facebook.';
       } else if (errorMessage) {
-        errorText = decodeURIComponent(errorMessage);
+        errorText = 'Lỗi OAuth';
+        try {
+          detailsText = decodeURIComponent(errorMessage);
+        } catch (e) {
+          console.error('[OAuth Callback] Failed to decode error message:', e);
+          detailsText = 'Có lỗi xảy ra khi xác thực.';
+        }
       }
       
       document.getElementById('error-message').textContent = errorText;
-      console.error('OAuth Error:', error, errorMessage);
+      
+      if (detailsText) {
+        document.getElementById('error-details').textContent = detailsText;
+        document.getElementById('error-details').style.display = 'block';
+      }
       
       setTimeout(() => {
         window.location.href = '/';
-      }, 3000);
+      }, 4000);
       
     } else if (accessToken) {
-      // Success - store tokens
+      // SUCCESS CASE
+      console.log('[OAuth Callback] Success! Storing tokens...');
+      
       document.getElementById('loading').style.display = 'none';
       document.getElementById('success').style.display = 'block';
       
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', params.get('refresh_token') || '');
-      localStorage.setItem('tokenExpiry', (Date.now() + parseInt(params.get('expires_in') || '900') * 1000).toString());
-      localStorage.setItem('userEmail', params.get('email') || '');
-      localStorage.setItem('userName', params.get('name') || '');
-      localStorage.setItem('authProvider', params.get('provider') || '');
+      if (email) {
+        document.getElementById('success-email').textContent = `Chào mừng ${name || email}!`;
+      }
       
-      console.log('OAuth Success:', {
-        provider: params.get('provider'),
-        email: params.get('email'),
-        name: params.get('name')
-      });
+      // Store tokens and user info in localStorage
+      try {
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        if (email) {
+          localStorage.setItem('userEmail', email);
+        }
+        if (name) {
+          localStorage.setItem('userName', name);
+        }
+        if (provider) {
+          localStorage.setItem('authProvider', provider);
+        }
+        if (expiresIn) {
+          const expiresInNum = parseInt(expiresIn, 10);
+          if (!isNaN(expiresInNum) && expiresInNum > 0) {
+            const expiryTime = Date.now() + expiresInNum * 1000;
+            localStorage.setItem('tokenExpiry', expiryTime.toString());
+          }
+        }
+        
+        console.log('[OAuth Callback] Tokens stored successfully');
+      } catch (e) {
+        console.error('[OAuth Callback] Failed to store tokens:', e);
+      }
       
+      // Redirect to homepage
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);
       
     } else {
-      // Unknown state
+      // UNKNOWN STATE
+      console.warn('[OAuth Callback] No error and no token - unknown state');
+      
       document.getElementById('loading').style.display = 'none';
       document.getElementById('error').style.display = 'block';
       document.getElementById('error-message').textContent = 'Trạng thái không xác định';
+      document.getElementById('error-details').textContent = 'Không nhận được thông tin đăng nhập từ OAuth provider.';
+      document.getElementById('error-details').style.display = 'block';
       
       setTimeout(() => {
         window.location.href = '/';
-      }, 3000);
+      }, 4000);
     }
   </script>
 </body>
