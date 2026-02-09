@@ -1,5 +1,6 @@
 import passport from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
+import type { Profile } from 'passport-github2';
 import OAuthService, { type GitHubProfile } from '../oauth.service.js';
 import logger from '../../../utils/logger.js';
 
@@ -24,8 +25,8 @@ export function setupGitHubStrategy() {
       async (
         accessToken: string,
         refreshToken: string,
-        profile: any,
-        done: Function
+        profile: Profile,
+        done: (error: any, user?: any) => void
       ) => {
         try {
           logger.info('GitHub OAuth callback', { profileId: profile.id });

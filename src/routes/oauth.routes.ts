@@ -10,6 +10,99 @@ import { authRateLimiter } from '../middlewares/rate-limiter.middleware.js';
 
 const router = Router();
 
+/**
+ * Helper function to process OAuth callback and generate tokens
+ * NOTE: User ID mapping - This creates synthetic user IDs like "google:123456".
+ * If you want to link multiple OAuth providers to the same user account,
+ * you'll need to implement user account linking/mapping to your database.
+ */
+async function handleOAuthCallback(
+  req: Request,
+  res: Response,
+  socialProfile: SocialProfile
+): Promise<void> {
+  if (!socialProfile || !socialProfile.email) {
+    logger.error(`${socialProfile?.provider || 'OAuth'}: No profile or email`);
+    res.redirect('/auth/login?error=no_email');
+    return;
+  }
+
+  // Extract device info from request
+  const deviceId = (req.headers['x-device-id'] as string) || `web-oauth-${socialProfile.provider}`;
+  const deviceName = (req.headers['x-device-name'] as string) || `${socialProfile.provider} OAuth`;
+  const deviceType = (req.headers['x-device-type'] as 'web' | 'mobile' | 'desktop') || 'web';
+  const ipAddress = req.ip || 'unknown';
+  const userAgent = req.headers['user-agent'] || 'unknown';
+
+  // For OAuth, use the provider ID as userId
+  // TODO: Map this to your user database to support multiple OAuth providers per user
+  const userId = `${socialProfile.provider}:${socialProfile.providerId}`;
+
+  // Generate JWT token pair
+  const tokenPair = JWTService.generateTokenPair({
+    userId,
+    email: socialProfile.email,
+    roles: ['user'], // Default role, adjust as needed
+    deviceId,
+    deviceName,
+    deviceType,
+    ipAddress,
+    userAgent
+  });
+
+  // Store refresh token in Redis
+  await TokenService.storeRefreshToken(
+    tokenPair.refreshToken,
+    {
+      userId,
+      sessionId: tokenPair.sessionId,
+      deviceId,
+      createdAt: new Date().toISOString()
+    },
+    tokenPair.refreshExpiresIn
+  );
+
+  // Create session
+  await SessionService.createSession(
+    {
+      userId,
+      email: socialProfile.email,
+      roles: ['user'],
+      deviceId,
+      deviceName,
+      deviceType,
+      ipAddress,
+      userAgent
+    },
+    tokenPair.refreshExpiresIn,
+    tokenPair.sessionId
+  );
+
+  logger.info(`${socialProfile.provider} OAuth login successful`, { 
+    userId, 
+    email: socialProfile.email 
+  });
+
+  // Return tokens in response
+  // NOTE: Refresh token is returned in JSON response for simplicity.
+  // For production, consider using httpOnly cookies to reduce XSS risk.
+  res.json({
+    ok: true,
+    data: {
+      accessToken: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken,
+      expiresIn: tokenPair.expiresIn,
+      tokenType: 'Bearer',
+      user: {
+        email: socialProfile.email,
+        name: socialProfile.name,
+        avatar: socialProfile.avatar,
+        provider: socialProfile.provider
+      }
+    }
+  });
+}
+
 // ===========================
 // GOOGLE OAUTH
 // ===========================
@@ -39,84 +132,7 @@ router.get(
   }),
   async (req: Request, res: Response) => {
     try {
-      const socialProfile = req.user as SocialProfile;
-      
-      if (!socialProfile || !socialProfile.email) {
-        logger.error('Google OAuth: No profile or email');
-        return res.redirect('/auth/login?error=no_email');
-      }
-
-      // Extract device info from request
-      const deviceId = (req.headers['x-device-id'] as string) || 'web-oauth-google';
-      const deviceName = (req.headers['x-device-name'] as string) || 'Google OAuth';
-      const deviceType = (req.headers['x-device-type'] as 'web' | 'mobile' | 'desktop') || 'web';
-      const ipAddress = req.ip || 'unknown';
-      const userAgent = req.headers['user-agent'] || 'unknown';
-
-      // For OAuth, use the provider ID as userId (or you might want to map this to your user database)
-      const userId = `${socialProfile.provider}:${socialProfile.providerId}`;
-
-      // Generate JWT token pair
-      const tokenPair = JWTService.generateTokenPair({
-        userId,
-        email: socialProfile.email,
-        roles: ['user'], // Default role, adjust as needed
-        deviceId,
-        deviceName,
-        deviceType,
-        ipAddress,
-        userAgent
-      });
-
-      // Store refresh token in Redis
-      await TokenService.storeRefreshToken(
-        tokenPair.refreshToken,
-        {
-          userId,
-          sessionId: tokenPair.sessionId,
-          deviceId,
-          createdAt: new Date().toISOString()
-        },
-        tokenPair.refreshExpiresIn
-      );
-
-      // Create session
-      await SessionService.createSession(
-        {
-          userId,
-          email: socialProfile.email,
-          roles: ['user'],
-          deviceId,
-          deviceName,
-          deviceType,
-          ipAddress,
-          userAgent
-        },
-        tokenPair.refreshExpiresIn,
-        tokenPair.sessionId
-      );
-
-      logger.info('Google OAuth login successful', { 
-        userId, 
-        email: socialProfile.email 
-      });
-
-      // Return tokens in response (you might want to redirect with tokens in query params or use a different approach)
-      res.json({
-        ok: true,
-        data: {
-          accessToken: tokenPair.accessToken,
-          refreshToken: tokenPair.refreshToken,
-          expiresIn: tokenPair.expiresIn,
-          tokenType: 'Bearer',
-          user: {
-            email: socialProfile.email,
-            name: socialProfile.name,
-            avatar: socialProfile.avatar,
-            provider: socialProfile.provider
-          }
-        }
-      });
+      await handleOAuthCallback(req, res, req.user as SocialProfile);
     } catch (error: any) {
       logger.error('Google OAuth callback error', { error: error.message });
       res.status(500).json({ error: 'OAuth authentication failed' });
@@ -153,84 +169,7 @@ router.get(
   }),
   async (req: Request, res: Response) => {
     try {
-      const socialProfile = req.user as SocialProfile;
-      
-      if (!socialProfile || !socialProfile.email) {
-        logger.error('GitHub OAuth: No profile or email');
-        return res.redirect('/auth/login?error=no_email');
-      }
-
-      // Extract device info from request
-      const deviceId = (req.headers['x-device-id'] as string) || 'web-oauth-github';
-      const deviceName = (req.headers['x-device-name'] as string) || 'GitHub OAuth';
-      const deviceType = (req.headers['x-device-type'] as 'web' | 'mobile' | 'desktop') || 'web';
-      const ipAddress = req.ip || 'unknown';
-      const userAgent = req.headers['user-agent'] || 'unknown';
-
-      // For OAuth, use the provider ID as userId
-      const userId = `${socialProfile.provider}:${socialProfile.providerId}`;
-
-      // Generate JWT token pair
-      const tokenPair = JWTService.generateTokenPair({
-        userId,
-        email: socialProfile.email,
-        roles: ['user'],
-        deviceId,
-        deviceName,
-        deviceType,
-        ipAddress,
-        userAgent
-      });
-
-      // Store refresh token in Redis
-      await TokenService.storeRefreshToken(
-        tokenPair.refreshToken,
-        {
-          userId,
-          sessionId: tokenPair.sessionId,
-          deviceId,
-          createdAt: new Date().toISOString()
-        },
-        tokenPair.refreshExpiresIn
-      );
-
-      // Create session
-      await SessionService.createSession(
-        {
-          userId,
-          email: socialProfile.email,
-          roles: ['user'],
-          deviceId,
-          deviceName,
-          deviceType,
-          ipAddress,
-          userAgent
-        },
-        tokenPair.refreshExpiresIn,
-        tokenPair.sessionId
-      );
-
-      logger.info('GitHub OAuth login successful', { 
-        userId, 
-        email: socialProfile.email 
-      });
-
-      // Return tokens in response
-      res.json({
-        ok: true,
-        data: {
-          accessToken: tokenPair.accessToken,
-          refreshToken: tokenPair.refreshToken,
-          expiresIn: tokenPair.expiresIn,
-          tokenType: 'Bearer',
-          user: {
-            email: socialProfile.email,
-            name: socialProfile.name,
-            avatar: socialProfile.avatar,
-            provider: socialProfile.provider
-          }
-        }
-      });
+      await handleOAuthCallback(req, res, req.user as SocialProfile);
     } catch (error: any) {
       logger.error('GitHub OAuth callback error', { error: error.message });
       res.status(500).json({ error: 'OAuth authentication failed' });
@@ -267,84 +206,7 @@ router.get(
   }),
   async (req: Request, res: Response) => {
     try {
-      const socialProfile = req.user as SocialProfile;
-      
-      if (!socialProfile || !socialProfile.email) {
-        logger.error('Facebook OAuth: No profile or email');
-        return res.redirect('/auth/login?error=no_email');
-      }
-
-      // Extract device info from request
-      const deviceId = (req.headers['x-device-id'] as string) || 'web-oauth-facebook';
-      const deviceName = (req.headers['x-device-name'] as string) || 'Facebook OAuth';
-      const deviceType = (req.headers['x-device-type'] as 'web' | 'mobile' | 'desktop') || 'web';
-      const ipAddress = req.ip || 'unknown';
-      const userAgent = req.headers['user-agent'] || 'unknown';
-
-      // For OAuth, use the provider ID as userId
-      const userId = `${socialProfile.provider}:${socialProfile.providerId}`;
-
-      // Generate JWT token pair
-      const tokenPair = JWTService.generateTokenPair({
-        userId,
-        email: socialProfile.email,
-        roles: ['user'],
-        deviceId,
-        deviceName,
-        deviceType,
-        ipAddress,
-        userAgent
-      });
-
-      // Store refresh token in Redis
-      await TokenService.storeRefreshToken(
-        tokenPair.refreshToken,
-        {
-          userId,
-          sessionId: tokenPair.sessionId,
-          deviceId,
-          createdAt: new Date().toISOString()
-        },
-        tokenPair.refreshExpiresIn
-      );
-
-      // Create session
-      await SessionService.createSession(
-        {
-          userId,
-          email: socialProfile.email,
-          roles: ['user'],
-          deviceId,
-          deviceName,
-          deviceType,
-          ipAddress,
-          userAgent
-        },
-        tokenPair.refreshExpiresIn,
-        tokenPair.sessionId
-      );
-
-      logger.info('Facebook OAuth login successful', { 
-        userId, 
-        email: socialProfile.email 
-      });
-
-      // Return tokens in response
-      res.json({
-        ok: true,
-        data: {
-          accessToken: tokenPair.accessToken,
-          refreshToken: tokenPair.refreshToken,
-          expiresIn: tokenPair.expiresIn,
-          tokenType: 'Bearer',
-          user: {
-            email: socialProfile.email,
-            name: socialProfile.name,
-            avatar: socialProfile.avatar,
-            provider: socialProfile.provider
-          }
-        }
-      });
+      await handleOAuthCallback(req, res, req.user as SocialProfile);
     } catch (error: any) {
       logger.error('Facebook OAuth callback error', { error: error.message });
       res.status(500).json({ error: 'OAuth authentication failed' });

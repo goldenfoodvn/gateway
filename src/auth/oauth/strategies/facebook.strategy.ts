@@ -1,5 +1,6 @@
 import passport from 'passport';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
+import type { Profile } from 'passport-facebook';
 import OAuthService, { type FacebookProfile } from '../oauth.service.js';
 import logger from '../../../utils/logger.js';
 
@@ -24,8 +25,8 @@ export function setupFacebookStrategy() {
       async (
         accessToken: string,
         refreshToken: string,
-        profile: any,
-        done: Function
+        profile: Profile,
+        done: (error: any, user?: any) => void
       ) => {
         try {
           logger.info('Facebook OAuth callback', { profileId: profile.id });
