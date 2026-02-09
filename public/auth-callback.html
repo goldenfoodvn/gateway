@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Đang đăng nhập...</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <main style="text-align: center; padding: 40px;">
+    <h2>🔐 Đang xử lý đăng nhập...</h2>
+    <p id="status">Vui lòng đợi...</p>
+  </main>
+  <script>
+    // Parse tokens from URL hash
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const error = params.get('error');
+    
+    if (error) {
+      document.getElementById('status').textContent = 'Đăng nhập thất bại: ' + error;
+      setTimeout(() => window.location.href = '/', 3000);
+    } else if (accessToken) {
+      // Store tokens
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('tokenExpiry', Date.now() + parseInt(params.get('expires_in')) * 1000);
+      localStorage.setItem('userEmail', params.get('email'));
+      localStorage.setItem('userName', params.get('name'));
+      localStorage.setItem('authProvider', params.get('provider'));
+      
+      document.getElementById('status').textContent = '✅ Đăng nhập thành công!';
+      setTimeout(() => window.location.href = '/', 1000);
+    } else {
+      document.getElementById('status').textContent = 'Lỗi: Không nhận được token';
+      setTimeout(() => window.location.href = '/', 3000);
+    }
+  </script>
+</body>
+</html>

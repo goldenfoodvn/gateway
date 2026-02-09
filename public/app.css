@@ -1,6 +1,47 @@
 ﻿body{font-family:system-ui,Arial;margin:16px;background:#f7fafc}
-header{background:#2b6cb0;color:white;padding:10px;border-radius:6px}
+header{background:#2b6cb0;color:white;padding:10px;border-radius:6px;position:relative}
 section{background:white;padding:12px;border-radius:8px;margin:10px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
 button{background:#2b6cb0;color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer}
 pre{background:#f1f5f9;padding:8px;border-radius:6px}
 input{padding:6px;border-radius:6px;border:1px solid #ddd;margin-right:6px}
+
+.oauth-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transition: transform 0.2s;
+}
+
+.oauth-btn:hover {
+  transform: scale(1.05);
+}
+
+#user-info {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+}
+
+#user-info button {
+  margin-left: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+#user-info button:hover {
+  background: rgba(255, 255, 255, 0.4);
+}

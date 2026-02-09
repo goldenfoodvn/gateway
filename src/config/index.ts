@@ -54,7 +54,10 @@ export const config = {
     'user-service': process.env.USER_SERVICE_URL || 'http://localhost:3001',
     'product-service': process.env.PRODUCT_SERVICE_URL || 'http://localhost:3002',
     'order-service': process.env.ORDER_SERVICE_URL || 'http://localhost:3003'
-  }
+  },
+  
+  // Frontend URL (for OAuth redirects)
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
 };
 
 export default config;
