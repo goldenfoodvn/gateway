@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧪 OAuth Testing Dashboard</title>
+  <link rel="stylesheet" href="/app.css">
+  <style>
+    .oauth-test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .oauth-test-container header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .oauth-test-container h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+    
+    .user-card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-card img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid #667eea;
+    }
+    
+    .user-card-info {
+      flex: 1;
+    }
+    
+    .user-card-info h3 {
+      margin: 0 0 5px 0;
+      color: #2d3748;
+    }
+    
+    .user-card-info p {
+      margin: 0;
+      color: #718096;
+    }
+    
+    .provider-section {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .provider-section h2 {
+      margin-top: 0;
+      color: #2d3748;
+      font-size: 1.5em;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+    
+    .checklist {
+      margin: 15px 0;
+      padding: 15px;
+      background: #f7fafc;
+      border-radius: 8px;
+    }
+    
+    .checklist label {
+      display: block;
+      margin: 8px 0;
+      color: #4a5568;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .checklist input[type="checkbox"] {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    
+    .checklist input[type="checkbox"]:checked + span {
+      color: #48bb78;
+      font-weight: 500;
+    }
+    
+    .btn-primary, .btn-success, .btn-danger, .btn-info {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-success {
+      background: #48bb78;
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: #38a169;
+    }
+    
+    .btn-danger {
+      background: #f56565;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #e53e3e;
+    }
+    
+    .btn-info {
+      background: #4299e1;
+      color: white;
+    }
+    
+    .btn-info:hover {
+      background: #3182ce;
+    }
+    
+    .debug-log {
+      background: #1a202c;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    .debug-log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid transparent;
+    }
+    
+    .log-entry.info {
+      color: #63b3ed;
+      border-left-color: #63b3ed;
+    }
+    
+    .log-entry.success {
+      color: #68d391;
+      border-left-color: #68d391;
+    }
+    
+    .log-entry.error {
+      color: #fc8181;
+      border-left-color: #fc8181;
+    }
+    
+    .log-entry.warn {
+      color: #f6ad55;
+      border-left-color: #f6ad55;
+    }
+    
+    .endpoint-result {
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Courier New', monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .token-display {
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      word-wrap: break-word;
+    }
+    
+    .token-label {
+      font-weight: bold;
+      color: #4a5568;
+      margin-bottom: 5px;
+    }
+    
+    .token-value {
+      color: #2d3748;
+      cursor: pointer;
+    }
+    
+    .token-value.hidden {
+      color: #a0aec0;
+      user-select: none;
+    }
+    
+    @media (max-width: 768px) {
+      .oauth-test-container {
+        padding: 10px;
+      }
+      
+      .user-card {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .provider-section {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="oauth-test-container">
+    <header>
+      <h1>🧪 OAuth Testing Dashboard</h1>
+      <p style="margin: 10px 0 0 0; opacity: 0.9;">Test Google, GitHub, and Facebook OAuth integrations</p>
+    </header>
+    
+    <!-- User Info Section (hidden until logged in) -->
+    <div id="user-info" style="display: none;">
+      <div class="user-card">
+        <img id="user-avatar" src="" alt="User Avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22%3E%3Crect fill=%22%23667eea%22 width=%2264%22 height=%2264%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2224%22%3E👤%3C/text%3E%3C/svg%3E'">
+        <div class="user-card-info">
+          <h3 id="user-name">Loading...</h3>
+          <p id="user-email">email@example.com</p>
+          <p id="user-provider" style="margin-top: 5px; font-size: 12px;"><strong>Provider:</strong> <span id="provider-name"></span></p>
+        </div>
+        <div>
+          <button class="btn-danger" onclick="logout()">Logout</button>
+        </div>
+      </div>
+      
+      <!-- Token Management -->
+      <div class="provider-section">
+        <h2>🔑 Token Management</h2>
+        <div class="token-display">
+          <div class="token-label">Access Token:</div>
+          <div class="token-value" id="access-token-display" onclick="toggleTokenVisibility('access')">Click to show</div>
+        </div>
+        <div class="token-display">
+          <div class="token-label">Refresh Token:</div>
+          <div class="token-value" id="refresh-token-display" onclick="toggleTokenVisibility('refresh')">Click to show</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Sections -->
+    <section class="provider-section" id="google-test">
+      <h2>🔵 Google OAuth Test</h2>
+      <button class="btn-primary" onclick="testGoogleLogin()">Login with Google</button>
+      <div class="checklist">
+        <label><input type="checkbox" id="google-1"><span> Click login button</span></label>
+        <label><input type="checkbox" id="google-2"><span> Redirect to provider</span></label>
+        <label><input type="checkbox" id="google-3"><span> User authorizes</span></label>
+        <label><input type="checkbox" id="google-4"><span> Callback received</span></label>
+        <label><input type="checkbox" id="google-5"><span> Tokens generated</span></label>
+        <label><input type="checkbox" id="google-6"><span> Session created</span></label>
+        <label><input type="checkbox" id="google-7"><span> User info retrieved</span></label>
+        <label><input type="checkbox" id="google-8"><span> Logged in successfully</span></label>
+      </div>
+    </section>
+
+    <section class="provider-section" id="github-test">
+      <h2>🐙 GitHub OAuth Test</h2>
+      <button class="btn-primary" onclick="testGitHubLogin()">Login with GitHub</button>
+      <div class="checklist">
+        <label><input type="checkbox" id="github-1"><span> Click login button</span></label>
+        <label><input type="checkbox" id="github-2"><span> Redirect to provider</span></label>
+        <label><input type="checkbox" id="github-3"><span> User authorizes</span></label>
+        <label><input type="checkbox" id="github-4"><span> Callback received</span></label>
+        <label><input type="checkbox" id="github-5"><span> Tokens generated</span></label>
+        <label><input type="checkbox" id="github-6"><span> Session created</span></label>
+        <label><input type="checkbox" id="github-7"><span> User info retrieved</span></label>
+        <label><input type="checkbox" id="github-8"><span> Logged in successfully</span></label>
+      </div>
+    </section>
+
+    <section class="provider-section" id="facebook-test">
+      <h2>📘 Facebook OAuth Test</h2>
+      <button class="btn-primary" onclick="testFacebookLogin()">Login with Facebook</button>
+      <div class="checklist">
+        <label><input type="checkbox" id="facebook-1"><span> Click login button</span></label>
+        <label><input type="checkbox" id="facebook-2"><span> Redirect to provider</span></label>
+        <label><input type="checkbox" id="facebook-3"><span> User authorizes</span></label>
+        <label><input type="checkbox" id="facebook-4"><span> Callback received</span></label>
+        <label><input type="checkbox" id="facebook-5"><span> Tokens generated</span></label>
+        <label><input type="checkbox" id="facebook-6"><span> Session created</span></label>
+        <label><input type="checkbox" id="facebook-7"><span> User info retrieved</span></label>
+        <label><input type="checkbox" id="facebook-8"><span> Logged in successfully</span></label>
+      </div>
+    </section>
+
+    <!-- Protected Endpoints Test -->
+    <section class="provider-section" id="endpoints-test">
+      <h2>🔒 Protected Endpoints Test</h2>
+      <div>
+        <button class="btn-info" onclick="testGetMe()">Test GET /me</button>
+        <button class="btn-info" onclick="testGetHealth()">Test GET /health</button>
+        <button class="btn-success" onclick="testRefreshToken()">Test POST /auth/refresh</button>
+      </div>
+      <div class="endpoint-result" id="endpoint-result"></div>
+    </section>
+
+    <!-- Debug Log -->
+    <section class="provider-section" id="debug-log-section">
+      <div class="debug-log-header">
+        <h2 style="margin: 0;">📋 Debug Log</h2>
+        <button class="btn-danger" onclick="clearLog()">Clear Log</button>
+      </div>
+      <div class="debug-log" id="log-content"></div>
+    </section>
+  </div>
+
+  <script src="/oauth-test.js"></script>
+</body>
+</html>

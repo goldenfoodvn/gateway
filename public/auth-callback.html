@@ -7,9 +7,16 @@
 </head>
 <body>
   <main style="text-align: center; padding: 40px;">
+    <div style="display: inline-block; width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
     <h2>🔐 Đang xử lý đăng nhập...</h2>
     <p id="status">Vui lòng đợi...</p>
   </main>
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
   <script>
     // Parse tokens from URL hash
     const hash = window.location.hash.substring(1);
@@ -21,7 +28,7 @@
     
     if (error) {
       document.getElementById('status').textContent = 'Đăng nhập thất bại: ' + error;
-      setTimeout(() => window.location.href = '/', 3000);
+      setTimeout(() => window.location.href = '/oauth-test.html', 3000);
     } else if (accessToken && refreshToken) {
       // Store tokens with validation
       const expiresIn = params.get('expires_in');
@@ -37,10 +44,10 @@
       localStorage.setItem('authProvider', params.get('provider') || '');
       
       document.getElementById('status').textContent = '✅ Đăng nhập thành công!';
-      setTimeout(() => window.location.href = '/', 1000);
+      setTimeout(() => window.location.href = '/oauth-test.html', 2000);
     } else {
       document.getElementById('status').textContent = 'Lỗi: Không nhận được token';
-      setTimeout(() => window.location.href = '/', 3000);
+      setTimeout(() => window.location.href = '/oauth-test.html', 3000);
     }
   </script>
 </body>
