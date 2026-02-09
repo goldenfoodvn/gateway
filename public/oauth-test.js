@@ -6,7 +6,7 @@
 // ===========================
 
 function addLog(level, message) {
-  const timestamp = new Date().toLocaleTimeString('vi-VN');
+  const timestamp = new Date().toLocaleTimeString();
   const log = document.getElementById('log-content');
   const logEntry = document.createElement('div');
   logEntry.className = `log-entry ${level.toLowerCase()}`;
