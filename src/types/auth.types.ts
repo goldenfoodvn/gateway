@@ -21,6 +21,8 @@ export interface TokenPair {
 export interface Session {
   sessionId: string;
   userId: string;
+  email: string;
+  roles: string[];
   deviceId: string;
   deviceName: string;
   deviceType: string;

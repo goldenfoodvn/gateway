@@ -9,15 +9,18 @@ export class SessionService {
    */
   async createSession(
     payload: Omit<TokenPayload, 'sessionId'>,
-    refreshTTL: number
+    refreshTTL: number,
+    sessionId?: string
   ): Promise<Session> {
-    const sessionId = uuidv4();
+    const sid = sessionId || uuidv4();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + refreshTTL * 1000);
 
     const session: Session = {
-      sessionId,
+      sessionId: sid,
       userId: payload.userId,
+      email: payload.email,
+      roles: payload.roles || [],
       deviceId: payload.deviceId || 'unknown',
       deviceName: payload.deviceName || 'Unknown Device',
       deviceType: payload.deviceType || 'web',
@@ -28,11 +31,11 @@ export class SessionService {
       expiresAt
     };
 
-    await TokenService.storeSession(sessionId, session, refreshTTL);
+    await TokenService.storeSession(sid, session, refreshTTL);
 
     logger.info('Session created', {
       userId: payload.userId,
-      sessionId,
+      sessionId: sid,
       deviceId: session.deviceId
     });
 

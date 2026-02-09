@@ -67,7 +67,8 @@ router.post('/auth/login', async (req: Request, res: Response) => {
         ipAddress,
         userAgent
       },
-      tokenPair.refreshExpiresIn
+      tokenPair.refreshExpiresIn,
+      tokenPair.sessionId
     );
 
     logger.info('User logged in', { userId, email, deviceId });
@@ -114,8 +115,8 @@ router.post('/auth/refresh', async (req: Request, res: Response) => {
     // Generate new access token
     const newAccessToken = JWTService.generateAccessToken({
       userId: session.userId,
-      email: '', // You might want to store email in session
-      roles: [],
+      email: session.email,
+      roles: session.roles,
       sessionId: session.sessionId,
       deviceId: session.deviceId,
       deviceName: session.deviceName,
