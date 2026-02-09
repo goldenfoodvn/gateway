@@ -12,6 +12,20 @@ export const config = {
     issuer: process.env.AUTH_ISSUER || ''
   },
   
+  // Redis Configuration
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || '',
+    db: parseInt(process.env.REDIS_DB || '0', 10)
+  },
+  
+  // JWT Secrets
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET || '',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || ''
+  },
+  
   // Gateway Config
   gateway: {
     partnerEventUrl: process.env.PARTNER_EVENT_URL || 'http://localhost:4001/platform/events',
