@@ -92,18 +92,28 @@ export class TokenService {
   async getUserSessions(userId: string): Promise<any[]> {
     const client = RedisManager.getClient();
     const pattern = `${this.SESSION_PREFIX}*`;
-    const keys = await client.keys(pattern);
-
     const sessions: any[] = [];
-    for (const key of keys) {
-      const data = await RedisManager.get(key);
-      if (data) {
-        const session = JSON.parse(data);
-        if (session.userId === userId) {
-          sessions.push(session);
+    
+    // Use SCAN instead of KEYS to avoid blocking Redis
+    let cursor = 0;
+    do {
+      const result = await client.scan(cursor, {
+        MATCH: pattern,
+        COUNT: 100
+      });
+      
+      cursor = result.cursor;
+      
+      for (const key of result.keys) {
+        const data = await RedisManager.get(key);
+        if (data) {
+          const session = JSON.parse(data);
+          if (session.userId === userId) {
+            sessions.push(session);
+          }
         }
       }
-    }
+    } while (cursor !== 0);
 
     return sessions;
   }
