@@ -9,9 +9,11 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import morgan from 'morgan';
+import passport from 'passport';
 
 import config from './config/index.js';
 import RedisManager from './config/redis.js';
+import { initializePassport } from './auth/passport.config.js';
 import {
   corsMiddleware,
   errorHandler,
@@ -56,6 +58,10 @@ app.use(corsMiddleware);
 app.use(requestLogger);
 app.use(morgan('dev'));
 app.use(rateLimiter());
+
+// Initialize Passport
+initializePassport();
+app.use(passport.initialize());
 
 // ===========================
 // STATIC FILES
