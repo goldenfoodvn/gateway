@@ -38,6 +38,10 @@ document.getElementById('btn-github').onclick = () => {
   window.location.href = '/auth/github';
 };
 
+document.getElementById('btn-facebook').onclick = () => {
+  window.location.href = '/auth/facebook';
+};
+
 // Logout
 document.getElementById('btn-logout').onclick = () => {
   localStorage.clear();
