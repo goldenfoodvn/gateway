@@ -87,6 +87,16 @@ export class RedisManager {
     const client = this.getClient();
     return await client.ttl(key);
   }
+
+  static async keys(pattern: string): Promise<string[]> {
+    const client = this.getClient();
+    return await client.keys(pattern);
+  }
+
+  static async expire(key: string, seconds: number): Promise<void> {
+    const client = this.getClient();
+    await client.expire(key, seconds);
+  }
 }
 
 export default RedisManager;
