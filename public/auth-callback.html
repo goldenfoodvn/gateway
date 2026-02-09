@@ -99,7 +99,7 @@
       
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', params.get('refresh_token') || '');
-      localStorage.setItem('tokenExpiry', Date.now() + parseInt(params.get('expires_in') || '900') * 1000);
+      localStorage.setItem('tokenExpiry', (Date.now() + parseInt(params.get('expires_in') || '900') * 1000).toString());
       localStorage.setItem('userEmail', params.get('email') || '');
       localStorage.setItem('userName', params.get('name') || '');
       localStorage.setItem('authProvider', params.get('provider') || '');
