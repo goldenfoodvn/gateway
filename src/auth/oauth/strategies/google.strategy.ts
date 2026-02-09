@@ -10,15 +10,20 @@ export function setupGoogleStrategy() {
   const callbackURL = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback';
 
   if (!clientID || !clientSecret) {
-    logger.warn('Google OAuth not configured - strategy disabled');
+    logger.warn('Google OAuth not configured - registering disabled strategy');
     
-    // Register a dummy strategy to prevent "Unknown strategy" error
-    passport.use('google', {
+    // Register a disabled strategy to prevent "Unknown strategy" error
+    const disabledStrategy = {
       name: 'google',
       authenticate: function(req: any) {
-        this.fail({ message: 'Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET' }, 501);
+        this.fail({ 
+          message: 'Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env file.' 
+        }, 501);
       }
-    } as any);
+    };
+    
+    passport.use('google', disabledStrategy as any);
+    logger.info('Google OAuth strategy registered as disabled');
     return;
   }
 

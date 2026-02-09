@@ -10,15 +10,20 @@ export function setupGitHubStrategy() {
   const callbackURL = process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/auth/github/callback';
 
   if (!clientID || !clientSecret) {
-    logger.warn('GitHub OAuth not configured - strategy disabled');
+    logger.warn('GitHub OAuth not configured - registering disabled strategy');
     
-    // Register a dummy strategy to prevent "Unknown strategy" error
-    passport.use('github', {
+    // Register a disabled strategy to prevent "Unknown strategy" error
+    const disabledStrategy = {
       name: 'github',
       authenticate: function(req: any) {
-        this.fail({ message: 'GitHub OAuth is not configured. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET' }, 501);
+        this.fail({ 
+          message: 'GitHub OAuth is not configured. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in .env file.' 
+        }, 501);
       }
-    } as any);
+    };
+    
+    passport.use('github', disabledStrategy as any);
+    logger.info('GitHub OAuth strategy registered as disabled');
     return;
   }
 
