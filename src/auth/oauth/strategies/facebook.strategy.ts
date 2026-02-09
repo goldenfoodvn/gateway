@@ -10,7 +10,15 @@ export function setupFacebookStrategy() {
   const callbackURL = process.env.FACEBOOK_CALLBACK_URL || 'http://localhost:3000/auth/facebook/callback';
 
   if (!clientID || !clientSecret) {
-    logger.warn('Facebook OAuth not configured - missing FACEBOOK_APP_ID or FACEBOOK_APP_SECRET');
+    logger.warn('Facebook OAuth not configured - strategy disabled');
+    
+    // Register a dummy strategy to prevent "Unknown strategy" error
+    passport.use('facebook', {
+      name: 'facebook',
+      authenticate: function(req: any) {
+        this.fail({ message: 'Facebook OAuth is not configured. Please set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET' }, 501);
+      }
+    } as any);
     return;
   }
 

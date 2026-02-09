@@ -2,52 +2,127 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <title>Đang đăng nhập...</title>
-  <link rel="stylesheet" href="/app.css">
-</head>
-<body>
-  <main style="text-align: center; padding: 40px;">
-    <div style="display: inline-block; width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-    <h2>🔐 Đang xử lý đăng nhập...</h2>
-    <p id="status">Vui lòng đợi...</p>
-  </main>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OAuth Callback</title>
   <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 500px;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .success { color: #4caf50; font-size: 48px; }
+    .error { color: #f44336; font-size: 48px; }
+    .message { margin-top: 20px; font-size: 18px; color: #333; }
   </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loading">
+      <div class="spinner"></div>
+      <div class="message">Đang xử lý đăng nhập...</div>
+    </div>
+    <div id="success" style="display:none;">
+      <div class="success">✅</div>
+      <div class="message">Đăng nhập thành công!</div>
+      <div class="message" style="font-size:14px;">Đang chuyển hướng...</div>
+    </div>
+    <div id="error" style="display:none;">
+      <div class="error">❌</div>
+      <div class="message" id="error-message">Đăng nhập thất bại</div>
+      <div class="message" style="font-size:14px;">Đang quay lại trang chủ...</div>
+    </div>
+  </div>
+
   <script>
-    // Parse tokens from URL hash
+    // Parse URL hash
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
     const error = params.get('error');
-    
+    const errorMessage = params.get('message');
+    const accessToken = params.get('access_token');
+
     if (error) {
-      document.getElementById('status').textContent = 'Đăng nhập thất bại: ' + error;
-      setTimeout(() => window.location.href = '/oauth-test.html', 3000);
-    } else if (accessToken && refreshToken) {
-      // Store tokens with validation
-      const expiresIn = params.get('expires_in');
-      const expiryTime = expiresIn && !isNaN(parseInt(expiresIn)) 
-        ? Date.now() + parseInt(expiresIn) * 1000 
-        : Date.now() + 3600 * 1000; // Default 1 hour
+      // Show error
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      
+      let errorText = 'Đăng nhập thất bại';
+      if (error === 'no_email') {
+        errorText = 'Không lấy được email. Vui lòng cấp quyền email.';
+      } else if (error === 'google_not_configured') {
+        errorText = 'Google OAuth chưa được cấu hình';
+      } else if (error === 'github_not_configured') {
+        errorText = 'GitHub OAuth chưa được cấu hình';
+      } else if (error === 'facebook_not_configured') {
+        errorText = 'Facebook OAuth chưa được cấu hình';
+      } else if (errorMessage) {
+        errorText = decodeURIComponent(errorMessage);
+      }
+      
+      document.getElementById('error-message').textContent = errorText;
+      console.error('OAuth Error:', error, errorMessage);
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+      
+    } else if (accessToken) {
+      // Success - store tokens
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
       
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('tokenExpiry', expiryTime.toString());
+      localStorage.setItem('refreshToken', params.get('refresh_token') || '');
+      localStorage.setItem('tokenExpiry', Date.now() + parseInt(params.get('expires_in') || '900') * 1000);
       localStorage.setItem('userEmail', params.get('email') || '');
       localStorage.setItem('userName', params.get('name') || '');
       localStorage.setItem('authProvider', params.get('provider') || '');
       
-      document.getElementById('status').textContent = '✅ Đăng nhập thành công!';
-      setTimeout(() => window.location.href = '/oauth-test.html', 2000);
+      console.log('OAuth Success:', {
+        provider: params.get('provider'),
+        email: params.get('email'),
+        name: params.get('name')
+      });
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+      
     } else {
-      document.getElementById('status').textContent = 'Lỗi: Không nhận được token';
-      setTimeout(() => window.location.href = '/oauth-test.html', 3000);
+      // Unknown state
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error-message').textContent = 'Trạng thái không xác định';
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
     }
   </script>
 </body>
