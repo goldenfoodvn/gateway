@@ -7,7 +7,9 @@
     "dev": "tsx watch src/router.ts",
     "prestart": "node scripts/kill-port.js",
     "start": "node dist/router.js",
-    "build": "tsc"
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "lint": "tsc --noEmit --noUnusedLocals --noUnusedParameters"
   },
   "dependencies": {
     "axios": "^1.7.2",
