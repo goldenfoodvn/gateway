@@ -139,11 +139,14 @@ This project uses:
 - **ES Modules (ESM)**: `package.json` has `"type": "module"` for modern JavaScript module support
 - **NodeNext Module Resolution**: TypeScript is configured with `"module": "NodeNext"` and `"moduleResolution": "NodeNext"` for optimal ESM compatibility
 - **`.js` Import Extensions**: Import statements use `.js` extensions (e.g., `import config from './config/index.js'`) as required by ESM, while TypeScript automatically resolves the corresponding `.ts` source files
+- **Strict Type Checking**: The project uses TypeScript's `strict` mode to catch type errors at compile time
 
 When adding new files, remember to:
 1. Use `.js` extensions in import statements
 2. Ensure proper named/default exports in index files
 3. TypeScript will handle type resolution from `.ts` files at compile time
+4. Run `npm run type-check` before committing to ensure no type errors
+5. All function parameters and return types should be explicitly typed (avoid implicit `any`)
 
 ---
 
@@ -491,9 +494,8 @@ docker-compose up -d
 | `npm run dev` | Start development server with auto-reload |
 | `npm run build` | Build TypeScript to JavaScript |
 | `npm start` | Start production server |
-| `npm run lint` | Lint code with ESLint |
-| `npm run format` | Format code with Prettier |
-| `npm test` | Run tests |
+| `npm run type-check` | Check TypeScript types without building |
+| `npm run lint` | Check TypeScript types with strict linting rules |
 
 ### Adding a New Service
 
