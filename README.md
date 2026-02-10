@@ -133,6 +133,18 @@ npm run build
 npm start
 ```
 
+### TypeScript & ESM Notes
+
+This project uses:
+- **ES Modules (ESM)**: `package.json` has `"type": "module"` for modern JavaScript module support
+- **NodeNext Module Resolution**: TypeScript is configured with `"module": "NodeNext"` and `"moduleResolution": "NodeNext"` for optimal ESM compatibility
+- **`.js` Import Extensions**: Import statements use `.js` extensions (e.g., `import config from './config/index.js'`) as required by ESM, while TypeScript automatically resolves the corresponding `.ts` source files
+
+When adding new files, remember to:
+1. Use `.js` extensions in import statements
+2. Ensure proper named/default exports in index files
+3. TypeScript will handle type resolution from `.ts` files at compile time
+
 ---
 
 ## 📡 API Endpoints
