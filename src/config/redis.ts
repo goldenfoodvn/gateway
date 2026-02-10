@@ -87,8 +87,9 @@ export class RedisManager {
           socket: {
             host,
             port,
-            reconnectStrategy: (retries) => {
-              // Custom reconnect strategy handled below
+            // Disable built-in reconnect strategy - we handle reconnection manually
+            // via scheduleReconnect() to have more control over backoff and logging
+            reconnectStrategy: () => {
               return new Error('Reconnect handled manually');
             }
           },

@@ -4,7 +4,7 @@ import { RedisStore } from 'rate-limit-redis';
 import RedisManager from '../config/redis.js';
 import logger from '../utils/logger.js';
 
-// Track if we've already logged the fallback warning
+// Track if we've already logged the fallback warning (shared to avoid duplicate messages)
 let hasLoggedRedisFallback = false;
 
 /**
