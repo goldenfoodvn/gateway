@@ -13,16 +13,16 @@ export function setupGitHubStrategy() {
     logger.warn('GitHub OAuth not configured - registering disabled strategy');
     
     // Register a disabled strategy to prevent "Unknown strategy" error
-    const disabledStrategy = {
-      name: 'github',
-      authenticate: function(req: any) {
+    class DisabledStrategy {
+      name = 'github';
+      authenticate(this: any, req: any) {
         this.fail({ 
           message: 'GitHub OAuth is not configured. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in .env file.' 
         }, 501);
       }
-    };
+    }
     
-    passport.use('github', disabledStrategy as any);
+    passport.use('github', new DisabledStrategy() as any);
     logger.info('GitHub OAuth strategy registered as disabled');
     return;
   }
@@ -45,7 +45,7 @@ export function setupGitHubStrategy() {
           logger.info('GitHub OAuth callback', { profileId: profile.id });
           
           // Map profile to internal format
-          const socialProfile = OAuthService.mapGitHubProfile(profile as GitHubProfile);
+          const socialProfile = OAuthService.mapGitHubProfile(profile as unknown as GitHubProfile);
           
           // Pass the social profile to the route handler
           done(null, socialProfile);

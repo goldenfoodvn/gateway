@@ -13,16 +13,16 @@ export function setupFacebookStrategy() {
     logger.warn('Facebook OAuth not configured - registering disabled strategy');
     
     // Register a disabled strategy to prevent "Unknown strategy" error
-    const disabledStrategy = {
-      name: 'facebook',
-      authenticate: function(req: any) {
+    class DisabledStrategy {
+      name = 'facebook';
+      authenticate(this: any, req: any) {
         this.fail({ 
           message: 'Facebook OAuth is not configured. Please set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in .env file.' 
         }, 501);
       }
-    };
+    }
     
-    passport.use('facebook', disabledStrategy as any);
+    passport.use('facebook', new DisabledStrategy() as any);
     logger.info('Facebook OAuth strategy registered as disabled');
     return;
   }

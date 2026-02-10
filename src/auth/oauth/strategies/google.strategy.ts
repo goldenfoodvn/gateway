@@ -13,16 +13,16 @@ export function setupGoogleStrategy() {
     logger.warn('Google OAuth not configured - registering disabled strategy');
     
     // Register a disabled strategy to prevent "Unknown strategy" error
-    const disabledStrategy = {
-      name: 'google',
-      authenticate: function(req: any) {
+    class DisabledStrategy {
+      name = 'google';
+      authenticate(this: any, req: any) {
         this.fail({ 
           message: 'Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env file.' 
         }, 501);
       }
-    };
+    }
     
-    passport.use('google', disabledStrategy as any);
+    passport.use('google', new DisabledStrategy() as any);
     logger.info('Google OAuth strategy registered as disabled');
     return;
   }
