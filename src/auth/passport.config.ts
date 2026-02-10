@@ -16,12 +16,13 @@ export function initializePassport() {
   setupFacebookStrategy();
 
   // Serialize user - not needed for stateless JWT auth
-  // But required by Passport
+  // But required by Passport (we pass through the full user object since we don't use sessions)
   passport.serializeUser((user: Express.User, done: (err: any, serializedUser?: Express.User) => void) => {
     done(null, user);
   });
 
   // Deserialize user - not needed for stateless JWT auth
+  // But required by Passport (we pass through the full user object since we don't use sessions)
   passport.deserializeUser((serializedUser: Express.User, done: (err: any, user?: Express.User | false | null) => void) => {
     done(null, serializedUser);
   });

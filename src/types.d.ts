@@ -5,7 +5,8 @@ declare global {
   namespace Express {
     // User can be either ExtendedJWTPayload (for JWT auth) or SocialProfile (for OAuth)
     // Properties are marked optional (?) to support both authentication flows
-    // The index signature is required for Passport.js compatibility
+    // The index signature [key: string]: any is required for Passport.js compatibility
+    // as various OAuth strategies return profile objects with dynamic properties
     interface User {
       // Common properties
       userId?: string;
