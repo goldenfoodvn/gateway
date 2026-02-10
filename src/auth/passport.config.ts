@@ -17,12 +17,12 @@ export function initializePassport() {
 
   // Serialize user - not needed for stateless JWT auth
   // But required by Passport
-  passport.serializeUser((user: any, done) => {
+  passport.serializeUser((user: Express.User, done: (err: any, id?: Express.User) => void) => {
     done(null, user);
   });
 
   // Deserialize user - not needed for stateless JWT auth
-  passport.deserializeUser((user: any, done) => {
+  passport.deserializeUser((user: Express.User, done: (err: any, user?: Express.User | false | null) => void) => {
     done(null, user);
   });
 
