@@ -4,7 +4,7 @@ import type { SocialProfile } from './auth/oauth/oauth.service.js';
 declare global {
   namespace Express {
     // User can be either ExtendedJWTPayload (for JWT auth) or SocialProfile (for OAuth)
-    // All properties are optional to support both authentication flows
+    // Properties are marked optional (?) to support both authentication flows
     // The index signature is required for Passport.js compatibility
     interface User {
       // Common properties
