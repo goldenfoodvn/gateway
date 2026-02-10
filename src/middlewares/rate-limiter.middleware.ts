@@ -19,11 +19,14 @@ function createRedisStore() {
   try {
     const client = RedisManager.getClient();
     
-    // Cast sendCommand to satisfy SendCommandFn type
-    // Redis client's sendCommand takes an array, but SendCommandFn expects spread args
-    const sendCommand: SendCommandFn = ((...args: string[]) => 
-      (client as any).sendCommand(args)
-    ) as SendCommandFn;
+    // Create a wrapper function that adapts Redis client's sendCommand to rate-limit-redis's SendCommandFn
+    // Redis v4 client.sendCommand expects: (args: string[]) => Promise<RedisReply>
+    // rate-limit-redis SendCommandFn expects: (...args: string[]) => Promise<RedisReply>
+    // We need to convert from spread args to array and handle the type cast
+    const sendCommand: SendCommandFn = ((...args: string[]) => {
+      // Use type assertion as the return types are compatible but TypeScript can't verify this
+      return (client as any).sendCommand(args) as Promise<any>;
+    }) as SendCommandFn;
     
     return new RedisStore({
       sendCommand
