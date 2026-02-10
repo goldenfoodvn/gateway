@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { authMiddleware, type AuthRequest } from '../middlewares/auth.middleware.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
 import JWTService from '../auth/jwt.service.js';
 import TokenService from '../auth/token.service.js';
 import SessionService from '../auth/session.service.js';
@@ -9,12 +9,10 @@ import logger from '../utils/logger.js';
 const router = Router();
 
 // Existing /me endpoint
-// @ts-expect-error - Pre-existing type mismatch with AuthRequest
 router.get('/me', authMiddleware, (req: Request, res: Response) => {
-  const authReq = req as AuthRequest;
   res.json({ 
     ok: true, 
-    user: authReq.user ?? null 
+    user: req.user ?? null 
   });
 });
 
@@ -147,12 +145,10 @@ router.post('/auth/refresh', async (req: Request, res: Response) => {
 });
 
 // 🆕 Logout endpoint
-// @ts-expect-error - Pre-existing type mismatch with AuthRequest
 router.post('/auth/logout', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const authReq = req as AuthRequest;
-    const token = authReq.headers.authorization?.replace('Bearer ', '') || '';
-    const user = authReq.user;
+    const token = req.headers.authorization?.replace('Bearer ', '') || '';
+    const user = req.user;
 
     if (!user?.sessionId) {
       return res.status(400).json({ error: 'Invalid session' });
@@ -175,11 +171,9 @@ router.post('/auth/logout', authMiddleware, async (req: Request, res: Response) 
 });
 
 // 🆕 Logout from all devices
-// @ts-expect-error - Pre-existing type mismatch with AuthRequest
 router.post('/auth/logout-all', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const authReq = req as AuthRequest;
-    const user = authReq.user;
+    const user = req.user;
 
     if (!user?.userId) {
       return res.status(400).json({ error: 'Invalid user' });
@@ -198,11 +192,9 @@ router.post('/auth/logout-all', authMiddleware, async (req: Request, res: Respon
 });
 
 // 🆕 Get user sessions
-// @ts-expect-error - Pre-existing type mismatch with AuthRequest
 router.get('/auth/sessions', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const authReq = req as AuthRequest;
-    const user = authReq.user;
+    const user = req.user;
 
     if (!user?.userId) {
       return res.status(400).json({ error: 'Invalid user' });
@@ -232,14 +224,12 @@ router.get('/auth/sessions', authMiddleware, async (req: Request, res: Response)
 });
 
 // 🆕 Delete specific session
-// @ts-expect-error - Pre-existing type mismatch with AuthRequest
 router.delete('/auth/sessions/:sessionId', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const authReq = req as AuthRequest;
-    const user = authReq.user;
-    const sessionId = Array.isArray(authReq.params.sessionId) 
-      ? authReq.params.sessionId[0] 
-      : authReq.params.sessionId;
+    const user = req.user;
+    const sessionId = Array.isArray(req.params.sessionId) 
+      ? req.params.sessionId[0] 
+      : req.params.sessionId;
 
     if (!user?.userId) {
       return res.status(400).json({ error: 'Invalid user' });

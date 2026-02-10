@@ -1,9 +1,11 @@
-import type { JWTPayload } from 'jose';
+import type { ExtendedJWTPayload } from './middlewares/auth.middleware.js';
+import type { SocialProfile } from './auth/oauth/oauth.service.js';
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: JWTPayload;
+    // User can be either ExtendedJWTPayload (for JWT auth) or SocialProfile (for OAuth)
+    interface User extends Partial<ExtendedJWTPayload>, Partial<SocialProfile> {
+      [key: string]: any; // Index signature for compatibility
     }
   }
 }
