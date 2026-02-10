@@ -15,7 +15,7 @@ export function setupGoogleStrategy() {
     // Register a disabled strategy to prevent "Unknown strategy" error
     class DisabledStrategy {
       name = 'google';
-      authenticate(this: any, req: any) {
+      authenticate(this: any, _req: any) {
         this.fail({ 
           message: 'Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env file.' 
         }, 501);
@@ -36,8 +36,8 @@ export function setupGoogleStrategy() {
         scope: ['profile', 'email']
       },
       async (
-        accessToken: string,
-        refreshToken: string,
+        _accessToken: string,
+        _refreshToken: string,
         profile: any,
         done: VerifyCallback
       ) => {

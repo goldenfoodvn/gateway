@@ -101,7 +101,7 @@ async function handleOAuthCallback(
  */
 router.get(
   '/auth/google',
-  (req: Request, res: Response, next: NextFunction) => {
+  (_req: Request, res: Response, next: NextFunction) => {
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       return res.redirect('/auth/callback#error=google_not_configured');
     }
@@ -144,7 +144,7 @@ router.get(
  */
 router.get(
   '/auth/github',
-  (req: Request, res: Response, next: NextFunction) => {
+  (_req: Request, res: Response, next: NextFunction) => {
     if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
       return res.redirect('/auth/callback#error=github_not_configured');
     }
@@ -187,7 +187,7 @@ router.get(
  */
 router.get(
   '/auth/facebook',
-  (req: Request, res: Response, next: NextFunction) => {
+  (_req: Request, res: Response, next: NextFunction) => {
     if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET) {
       return res.redirect('/auth/callback#error=facebook_not_configured&message=Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in .env');
     }

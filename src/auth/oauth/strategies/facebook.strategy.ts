@@ -15,7 +15,7 @@ export function setupFacebookStrategy() {
     // Register a disabled strategy to prevent "Unknown strategy" error
     class DisabledStrategy {
       name = 'facebook';
-      authenticate(this: any, req: any) {
+      authenticate(this: any, _req: any) {
         this.fail({ 
           message: 'Facebook OAuth is not configured. Please set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in .env file.' 
         }, 501);
@@ -36,8 +36,8 @@ export function setupFacebookStrategy() {
         profileFields: ['id', 'displayName', 'emails', 'name', 'photos']
       },
       async (
-        accessToken: string,
-        refreshToken: string,
+        _accessToken: string,
+        _refreshToken: string,
         profile: Profile,
         done: (error: any, user?: any) => void
       ) => {
