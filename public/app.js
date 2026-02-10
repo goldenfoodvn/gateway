@@ -15,9 +15,27 @@ async function call(path, options) {
 
 // Check if user is logged in
 function checkAuth() {
-  const token = localStorage.getItem('accessToken');
-  const userName = localStorage.getItem('userName');
-  const userEmail = localStorage.getItem('userEmail');
+  let token, userName, userEmail;
+  
+  // Try new unified key first
+  try {
+    const authData = localStorage.getItem('sapalens_auth');
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      token = parsed.accessToken;
+      userName = parsed.name;
+      userEmail = parsed.email;
+    }
+  } catch (e) {
+    // Fall back to individual keys
+  }
+  
+  // Fall back to individual keys if unified key not found
+  if (!token) {
+    token = localStorage.getItem('accessToken');
+    userName = localStorage.getItem('userName');
+    userEmail = localStorage.getItem('userEmail');
+  }
   
   if (token && userName) {
     document.getElementById('login-section').style.display = 'none';
@@ -56,7 +74,24 @@ document.getElementById("btn-health").onclick = async () => {
 
 // Protected /me endpoint
 document.getElementById("btn-me").onclick = async () => {
-  const token = localStorage.getItem('accessToken');
+  let token;
+  
+  // Try new unified key first
+  try {
+    const authData = localStorage.getItem('sapalens_auth');
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      token = parsed.accessToken;
+    }
+  } catch (e) {
+    // Fall back to old key
+  }
+  
+  // Fall back to old key
+  if (!token) {
+    token = localStorage.getItem('accessToken');
+  }
+  
   document.getElementById("me-res").textContent = "...";
   document.getElementById("me-res").textContent = await call("/me", {
     headers: {

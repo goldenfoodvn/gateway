@@ -184,6 +184,7 @@
       
       // Store tokens and user info in localStorage
       try {
+        // Store individual keys for backward compatibility
         localStorage.setItem('accessToken', accessToken);
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
@@ -204,6 +205,19 @@
             localStorage.setItem('tokenExpiry', expiryTime.toString());
           }
         }
+        
+        // Store unified auth object (recommended key)
+        const authData = {
+          accessToken,
+          refreshToken: refreshToken || null,
+          email: email || null,
+          name: name || null,
+          provider: provider || null,
+          expiresIn: expiresIn ? parseInt(expiresIn, 10) : null,
+          tokenExpiry: expiresIn ? Date.now() + parseInt(expiresIn, 10) * 1000 : null,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('sapalens_auth', JSON.stringify(authData));
         
         console.log('[OAuth Callback] Tokens stored successfully');
       } catch (e) {

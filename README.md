@@ -239,6 +239,215 @@ gateway/
 
 ---
 
+## 🔐 OAuth Setup
+
+The gateway supports OAuth login with Google, GitHub, and Facebook. Each provider can be enabled/disabled independently.
+
+### How OAuth Works
+
+1. User clicks login button (e.g., "Login with Google")
+2. User is redirected to the OAuth provider for authorization
+3. After authorization, provider redirects back to `/auth/{provider}/callback`
+4. Gateway generates JWT tokens and stores them in the browser's localStorage
+5. User is redirected back to the homepage, now logged in
+
+### Setting Up OAuth Providers
+
+#### Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google+ API**
+4. Navigate to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure the OAuth consent screen
+6. Add authorized redirect URI: `http://localhost:3000/auth/google/callback`
+7. Copy the **Client ID** and **Client Secret** to your `.env`:
+
+```env
+GOOGLE_CLIENT_ID=your-client-id-here
+GOOGLE_CLIENT_SECRET=your-client-secret-here
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+```
+
+#### GitHub OAuth
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click **New OAuth App**
+3. Fill in the application details:
+   - **Application name**: Your app name
+   - **Homepage URL**: `http://localhost:3000`
+   - **Authorization callback URL**: `http://localhost:3000/auth/github/callback`
+4. Copy the **Client ID** and generate a **Client Secret**
+5. Add to your `.env`:
+
+```env
+GITHUB_CLIENT_ID=your-client-id-here
+GITHUB_CLIENT_SECRET=your-client-secret-here
+GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
+```
+
+#### Facebook OAuth
+
+1. Go to [Facebook Developers](https://developers.facebook.com/)
+2. Create a new app or select an existing one
+3. Add **Facebook Login** product
+4. In Facebook Login settings, add valid OAuth redirect URI:
+   - `http://localhost:3000/auth/facebook/callback`
+5. Copy the **App ID** and **App Secret** to your `.env`:
+
+```env
+FACEBOOK_APP_ID=your-app-id-here
+FACEBOOK_APP_SECRET=your-app-secret-here
+FACEBOOK_CALLBACK_URL=http://localhost:3000/auth/facebook/callback
+```
+
+### Disabling OAuth Providers
+
+To disable a provider, simply leave its credentials empty in `.env`:
+
+```env
+# Facebook disabled - leave empty
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+```
+
+When disabled, users will see a friendly error message if they try to use that provider.
+
+### OAuth Endpoints
+
+- **Google**: `GET /auth/google` → `GET /auth/google/callback`
+- **GitHub**: `GET /auth/github` → `GET /auth/github/callback`
+- **Facebook**: `GET /auth/facebook` → `GET /auth/facebook/callback`
+- **Callback Page**: `GET /auth/callback` - Displays login success/error and stores tokens
+
+### Frontend Integration
+
+The frontend stores authentication data in `localStorage` under the key `sapalens_auth`:
+
+```javascript
+const authData = JSON.parse(localStorage.getItem('sapalens_auth'));
+// { accessToken, refreshToken, email, name, provider, ... }
+```
+
+For API requests, include the access token in the Authorization header:
+
+```javascript
+fetch('/api/endpoint', {
+  headers: {
+    'Authorization': `Bearer ${authData.accessToken}`
+  }
+});
+```
+
+---
+
+## 🗄️ Redis Setup
+
+Redis is used for:
+- Rate limiting (stores request counts per IP)
+- Session management (stores user sessions)
+- Token storage (stores refresh tokens)
+
+### Running Redis Locally
+
+#### Option 1: Docker (Recommended)
+
+```bash
+# Run Redis in Docker
+docker run -d --name redis -p 6379:6379 redis:latest
+
+# Or using docker-compose (add to docker-compose.yml):
+# redis:
+#   image: redis:latest
+#   ports:
+#     - "6379:6379"
+```
+
+#### Option 2: WSL (Windows Subsystem for Linux)
+
+```bash
+# Install Redis on WSL
+sudo apt update
+sudo apt install redis-server
+
+# Start Redis
+sudo service redis-server start
+
+# Check status
+redis-cli ping
+# Should return: PONG
+```
+
+#### Option 3: Native Installation
+
+- **macOS**: `brew install redis && brew services start redis`
+- **Linux**: `sudo apt install redis-server && sudo systemctl start redis`
+
+### Redis Configuration
+
+Configure Redis in your `.env` file:
+
+```env
+# Enable/disable Redis (default: true)
+REDIS_ENABLED=true
+
+# Option 1: Use connection URL (recommended)
+REDIS_URL=redis://localhost:6379
+
+# Option 2: Individual parameters
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+```
+
+### Redis Fallback Behavior
+
+If Redis is not available:
+- The gateway will **continue to function normally**
+- Rate limiting will use **in-memory storage** (resets on restart)
+- Sessions/tokens will use **in-memory storage**
+- A warning will be logged **once** (not spammed)
+- Redis status is visible at `/health` and `/admin/api/stats`
+
+### Redis Auto-Reconnection
+
+The gateway automatically attempts to reconnect to Redis:
+- **Retry strategy**: Exponential backoff (1s → 2s → 4s → 8s → 16s → 30s max)
+- **Max attempts**: 10 per disconnection
+- **Log throttling**: Same error logged max once per 15 seconds
+- **Status endpoint**: Check `/health` to see Redis connection status
+
+### Checking Redis Status
+
+```bash
+# Via health endpoint
+curl http://localhost:3000/health
+
+# Response includes:
+# {
+#   "status": "ok",
+#   "redis": {
+#     "enabled": true,
+#     "connected": true,
+#     "lastError": null,
+#     "reconnectAttempts": 0
+#   }
+# }
+```
+
+### Disabling Redis
+
+To run without Redis:
+
+```env
+REDIS_ENABLED=false
+```
+
+This is useful for development or when you don't need distributed rate limiting.
+
+---
+
 ## 🐳 Docker
 
 ### Build Docker Image
