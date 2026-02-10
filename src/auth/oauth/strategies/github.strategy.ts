@@ -15,7 +15,7 @@ export function setupGitHubStrategy() {
     // Register a disabled strategy to prevent "Unknown strategy" error
     class DisabledStrategy {
       name = 'github';
-      authenticate(this: any, req: any) {
+      authenticate(this: any, _req: any) {
         this.fail({ 
           message: 'GitHub OAuth is not configured. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in .env file.' 
         }, 501);
@@ -36,8 +36,8 @@ export function setupGitHubStrategy() {
         scope: ['user:email']
       },
       async (
-        accessToken: string,
-        refreshToken: string,
+        _accessToken: string,
+        _refreshToken: string,
         profile: Profile,
         done: (error: any, user?: any) => void
       ) => {

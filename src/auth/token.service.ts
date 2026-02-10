@@ -1,5 +1,5 @@
 import RedisManager from '../config/redis.js';
-import type { TokenPayload, RefreshTokenData } from '../types/auth.types.js';
+import type { RefreshTokenData } from '../types/auth.types.js';
 import logger from '../utils/logger.js';
 
 export class TokenService {
