@@ -146,7 +146,7 @@ When adding new files, remember to:
 2. Ensure proper named/default exports in index files
 3. TypeScript will handle type resolution from `.ts` files at compile time
 4. Run `npm run type-check` before committing to ensure no type errors
-5. All function parameters and return types should be explicitly typed (avoid implicit `any`)
+5. Ensure all function parameters and return types are explicitly typed
 
 ---
 
@@ -495,7 +495,7 @@ docker-compose up -d
 | `npm run build` | Build TypeScript to JavaScript |
 | `npm start` | Start production server |
 | `npm run type-check` | Check TypeScript types without building |
-| `npm run lint` | Check TypeScript types with strict linting rules |
+| `npm run lint` | Check for unused variables and parameters |
 
 ### Adding a New Service
 
