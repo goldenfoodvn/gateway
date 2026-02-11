@@ -83,14 +83,9 @@ router.get('/admin/api/services', async (_req: Request, res: Response) => {
  */
 router.delete('/admin/api/services/:name', async (req: Request, res: Response) => {
   try {
-    const { name } = req.params;
-
-    if (!name) {
-      return res.status(400).json({
-        error: 'invalid_request',
-        message: 'Service name is required'
-      });
-    }
+    const name = Array.isArray(req.params.name) 
+      ? req.params.name[0] 
+      : req.params.name;
 
     // Check if service exists
     const url = await RegistryService.getService(name);
