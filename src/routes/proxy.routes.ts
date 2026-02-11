@@ -41,7 +41,7 @@ Object.entries(ServiceRegistry).forEach(([key, service]) => {
   });
   
   // Tạo function để wrap proxy middleware với Promise
-  const proxyFunction = (req: Request, res: Response): Promise<void> => {
+  const promisifyProxyMiddleware = (req: Request, res: Response): Promise<void> => {
     return new Promise((resolve, reject) => {
       let isResolved = false;
       
@@ -79,7 +79,7 @@ Object.entries(ServiceRegistry).forEach(([key, service]) => {
   };
   
   // Tạo Circuit Breaker cho service này
-  const breaker = new CircuitBreaker(proxyFunction, {
+  const breaker = new CircuitBreaker(promisifyProxyMiddleware, {
     timeout: config.circuitBreaker.timeout,
     errorThresholdPercentage: config.circuitBreaker.errorThresholdPercentage,
     resetTimeout: config.circuitBreaker.resetTimeout,
@@ -103,26 +103,20 @@ Object.entries(ServiceRegistry).forEach(([key, service]) => {
   
   // Middleware sử dụng Circuit Breaker
   router.use(path, async (req: Request, res: Response, next: NextFunction) => {
-    // Kiểm tra xem circuit breaker có mở không trước khi gọi service
-    if (breaker.opened) {
-      logger.warn(`Circuit breaker is OPEN for ${key}, rejecting request immediately`);
-      return res.status(503).json({
-        error: 'service_unavailable',
-        message: `The ${service.name} is temporarily unavailable. Please try again later.`,
-        service: key,
-        circuitBreakerState: 'open'
-      });
-    }
-    
     try {
       await breaker.fire(req, res);
     } catch (error) {
+      // Circuit breaker mở hoặc service lỗi
       // Chỉ xử lý lỗi nếu response chưa được gửi
       if (!res.headersSent) {
+        const errorMessage = breaker.opened 
+          ? `The ${service.name} is temporarily unavailable. Please try again later.`
+          : 'An error occurred while processing your request';
+        
         logger.error(`Error handling request for ${key}:`, error);
         res.status(503).json({
-          error: 'service_error',
-          message: 'An error occurred while processing your request',
+          error: 'service_unavailable',
+          message: errorMessage,
           service: key
         });
       }

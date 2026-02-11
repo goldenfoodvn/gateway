@@ -81,7 +81,7 @@ app.get('/metrics', async (_req, res) => {
     const metrics = await register.metrics();
     res.end(metrics);
   } catch (err) {
-    res.status(500).end(err);
+    res.status(500).send('Failed to retrieve metrics');
   }
 });
 
