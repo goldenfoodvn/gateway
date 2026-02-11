@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is deprecated. Services are now managed dynamically via Redis.
+ * Use RegistryService from src/services/registry.service.ts instead.
+ * This file is kept for reference only.
+ */
+
 export interface ServiceConfig {
   name: string;
   url: string;
