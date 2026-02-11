@@ -18,9 +18,11 @@ import {
   corsMiddleware,
   errorHandler,
   rateLimiter,
-  requestLogger
+  requestLogger,
+  metricsMiddleware
 } from './middlewares/index.js';
 import routes from './routes/index.js';
+import { register } from './utils/metrics.js';
 
 const app: Application = express();
 
@@ -55,6 +57,7 @@ if (!publicPath) {
 // ===========================
 app.use(express.json());
 app.use(corsMiddleware);
+app.use(metricsMiddleware); // Đặt sớm để đo thời gian xử lý của tất cả request
 app.use(requestLogger);
 app.use(morgan('dev'));
 app.use(rateLimiter());
@@ -67,6 +70,20 @@ app.use(passport.initialize());
 // STATIC FILES
 // ===========================
 app.use(express.static(publicPath));
+
+// ===========================
+// METRICS ENDPOINT
+// ===========================
+// Prometheus metrics endpoint để scrape dữ liệu
+app.get('/metrics', async (_req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    const metrics = await register.metrics();
+    res.end(metrics);
+  } catch (err) {
+    res.status(500).end(err);
+  }
+});
 
 // ===========================
 // SPA FALLBACK ROUTES (before API routes)
