@@ -58,6 +58,18 @@ export const config = {
     'order-service': process.env.ORDER_SERVICE_URL || 'http://localhost:3003'
   },
   
+  // Circuit Breaker Configuration
+  circuitBreaker: {
+    timeout: parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT || '3000', 10),
+    errorThresholdPercentage: parseInt(process.env.CIRCUIT_BREAKER_ERROR_THRESHOLD || '50', 10),
+    resetTimeout: parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT || '10000', 10)
+  },
+  
+  // Metrics Configuration
+  metrics: {
+    enabled: process.env.METRICS_ENABLED !== 'false' // Enabled by default unless explicitly disabled
+  },
+  
   // Frontend URL (for OAuth redirects)
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
 };
