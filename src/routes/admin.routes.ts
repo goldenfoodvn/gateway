@@ -2,11 +2,15 @@ import { Router, type Request, type Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import RedisManager from '../config/redis.js';
+import registryRoutes from './registry.routes.js';
 
 const router = Router();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Mount registry routes
+router.use('/', registryRoutes);
 
 // Admin panel route
 router.get('/admin', (_req: Request, res: Response) => {
