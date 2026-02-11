@@ -158,7 +158,7 @@ RedisManager.connect().catch(err => {
 const server = app.listen(PORT, () => {
   console.log(`🚀 Gateway is running on port ${PORT}`);
   console.log(`📍 Environment: ${config.env}`);
-  console.log(`🔗 Services registered: ${Object.keys(config.services).length}`);
+  console.log(`🔗 Dynamic service registry enabled via Redis`);
 });
 
 // ===========================

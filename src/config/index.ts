@@ -51,13 +51,6 @@ export const config = {
     max: 100
   },
   
-  // Services Registry
-  services: {
-    'user-service': process.env.USER_SERVICE_URL || 'http://localhost:3001',
-    'product-service': process.env.PRODUCT_SERVICE_URL || 'http://localhost:3002',
-    'order-service': process.env.ORDER_SERVICE_URL || 'http://localhost:3003'
-  },
-  
   // Circuit Breaker Configuration
   circuitBreaker: {
     timeout: parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT || '3000', 10),
