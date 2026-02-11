@@ -16,34 +16,63 @@ Object.entries(ServiceRegistry).forEach(([key, service]) => {
   
   logger.info(`Registering proxy route: ${path} → ${service.url}`);
   
-  // Tạo proxy middleware
+  // Tạo proxy middleware với error handling
   const proxyMiddleware = createProxyMiddleware({
     target: service.url,
     changeOrigin: true,
     pathRewrite: {
       [`^${path}`]: ''
     },
-    timeout: service.timeout
+    timeout: service.timeout,
+    // Xử lý lỗi proxy
+    on: {
+      error: (err, req, res) => {
+        logger.error(`Proxy error for ${key}:`, err.message);
+        // Chỉ gửi response nếu headers chưa được gửi và res là Response object
+        if (res && typeof (res as any).status === 'function' && !(res as any).headersSent) {
+          (res as Response).status(503).json({
+            error: 'service_unavailable',
+            message: 'The service is currently unavailable',
+            service: key
+          });
+        }
+      }
+    }
   });
   
   // Tạo function để wrap proxy middleware với Promise
-  const proxyFunction = (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const proxyFunction = (req: Request, res: Response): Promise<void> => {
     return new Promise((resolve, reject) => {
+      let isResolved = false;
+      
+      // Lắng nghe khi response hoàn thành
+      const onFinish = () => {
+        if (!isResolved) {
+          isResolved = true;
+          if (res.statusCode >= 500) {
+            reject(new Error(`Service returned ${res.statusCode}`));
+          } else {
+            resolve();
+          }
+        }
+      };
+      
+      // Lắng nghe lỗi
+      const onError = (err: Error) => {
+        if (!isResolved) {
+          isResolved = true;
+          reject(err);
+        }
+      };
+      
+      res.once('finish', onFinish);
+      res.once('error', onError);
+      
       // Call proxy middleware
       (proxyMiddleware as RequestHandler)(req, res, (err?: any) => {
-        if (err) {
+        if (err && !isResolved) {
+          isResolved = true;
           reject(err);
-        } else {
-          resolve();
-        }
-      });
-      
-      // Lắng nghe khi proxy hoàn thành
-      res.on('finish', () => {
-        if (res.statusCode >= 500) {
-          reject(new Error(`Service returned ${res.statusCode}`));
-        } else {
-          resolve();
         }
       });
     });
@@ -53,7 +82,8 @@ Object.entries(ServiceRegistry).forEach(([key, service]) => {
   const breaker = new CircuitBreaker(proxyFunction, {
     timeout: config.circuitBreaker.timeout,
     errorThresholdPercentage: config.circuitBreaker.errorThresholdPercentage,
-    resetTimeout: config.circuitBreaker.resetTimeout
+    resetTimeout: config.circuitBreaker.resetTimeout,
+    name: key
   });
   
   // Log các sự kiện của Circuit Breaker
@@ -73,21 +103,28 @@ Object.entries(ServiceRegistry).forEach(([key, service]) => {
   
   // Middleware sử dụng Circuit Breaker
   router.use(path, async (req: Request, res: Response, next: NextFunction) => {
+    // Kiểm tra xem circuit breaker có mở không trước khi gọi service
+    if (breaker.opened) {
+      logger.warn(`Circuit breaker is OPEN for ${key}, rejecting request immediately`);
+      return res.status(503).json({
+        error: 'service_unavailable',
+        message: `The ${service.name} is temporarily unavailable. Please try again later.`,
+        service: key,
+        circuitBreakerState: 'open'
+      });
+    }
+    
     try {
-      await breaker.fire(req, res, next);
+      await breaker.fire(req, res);
     } catch (error) {
-      // Circuit breaker mở hoặc service lỗi
-      if (breaker.opened) {
-        logger.error(`Circuit breaker is OPEN for ${key}, rejecting request`);
+      // Chỉ xử lý lỗi nếu response chưa được gửi
+      if (!res.headersSent) {
+        logger.error(`Error handling request for ${key}:`, error);
         res.status(503).json({
-          error: 'service_unavailable',
-          message: `The ${service.name} is temporarily unavailable. Please try again later.`,
+          error: 'service_error',
+          message: 'An error occurred while processing your request',
           service: key
         });
-      } else {
-        // Lỗi khác từ proxy
-        logger.error(`Proxy error for ${key}:`, error);
-        next(error);
       }
     }
   });
