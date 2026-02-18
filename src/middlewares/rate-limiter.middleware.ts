@@ -5,84 +5,68 @@ import type { SendCommandFn } from 'rate-limit-redis';
 import RedisManager from '../config/redis.js';
 import logger from '../utils/logger.js';
 
-// Track if we've already logged the fallback warning (shared to avoid duplicate messages)
-let hasLoggedRedisFallback = false;
+const DEFAULT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
+const DEFAULT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX) || 100;
+const DEFAULT_AUTH_MAX = Number(process.env.AUTH_RATE_LIMIT_MAX) || 10;
+const DEV_WHITELIST = ['127.0.0.1', 'localhost'];
 
 /**
- * Create a Redis store wrapper that's compatible with express-rate-limit
- * Returns undefined if Redis is not available
- * 
- * Uses try/catch around RedisManager.getClient() instead of isAvailable()
- * to avoid TypeScript type issues and ensure clean fallback
+ * Tự động xét có whitelist IP trong DEV/test
+ */
+function isWhitelisted(ip: string): boolean {
+  return DEV_WHITELIST.includes(ip) || process.env.NODE_ENV === 'development';
+}
+
+/**
+ * Tạo Redis store nếu khả dụng, đảm bảo fallback type safety.
  */
 function createRedisStore() {
   try {
     const client = RedisManager.getClient();
-    
-    // Create a wrapper function that adapts Redis client's sendCommand to rate-limit-redis's SendCommandFn
-    // Redis v4 client.sendCommand expects: (args: string[]) => Promise<RedisReply>
-    // rate-limit-redis SendCommandFn expects: (...args: string[]) => Promise<RedisReply>
-    // We need to convert from spread args to array and handle the type cast
-    const sendCommand: SendCommandFn = ((...args: string[]) => {
-      // Use type assertion as the return types are compatible but TypeScript can't verify this
-      return (client as any).sendCommand(args) as Promise<any>;
-    }) as SendCommandFn;
-    
-    return new RedisStore({
-      sendCommand
-    });
+    const sendCommand: SendCommandFn = ((...args: string[]) =>
+      (client as any).sendCommand(args) as Promise<any>
+    ) as SendCommandFn;
+    return new RedisStore({ sendCommand });
   } catch (error) {
-    // Redis not available - will fall back to in-memory limiter
+    logger.warn('Redis unavailable, using in-memory limiter');
     return undefined;
   }
 }
 
 /**
- * General rate limiter - 100 requests per 15 minutes
+ * Rate limiter cho toàn bộ request - cấu hình động
  */
 export function rateLimiter() {
   const redisStore = createRedisStore();
-  
-  if (!redisStore && !hasLoggedRedisFallback) {
-    logger.warn('Redis not available, using in-memory rate limiter');
-    hasLoggedRedisFallback = true;
-  }
-  
+
   return rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: DEFAULT_WINDOW_MS,
+    max: DEFAULT_MAX_REQUESTS,
     standardHeaders: true,
     legacyHeaders: false,
-    store: redisStore, // Use Redis if available, otherwise default in-memory
+    store: redisStore,
+    skip: (req: Request) => isWhitelisted(req.ip),
     handler: (_req: Request, res: Response) => {
-      res.status(429).json({ 
-        error: 'Too many requests, please try again later.' 
-      });
+      res.status(429).json({ error: 'Too many requests, please try again later.' });
     }
   });
 }
 
 /**
- * Auth rate limiter - 5 requests per 15 minutes
+ * Rate limiter cho các luồng auth (login/register/social) - max thấp hơn
  */
 export function authRateLimiter() {
   const redisStore = createRedisStore();
-  
-  if (!redisStore && !hasLoggedRedisFallback) {
-    logger.warn('Redis not available, using in-memory auth rate limiter');
-    hasLoggedRedisFallback = true;
-  }
-  
+
   return rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 requests per windowMs
+    windowMs: DEFAULT_WINDOW_MS,
+    max: DEFAULT_AUTH_MAX,
     standardHeaders: true,
     legacyHeaders: false,
-    store: redisStore, // Use Redis if available, otherwise default in-memory
+    store: redisStore,
+    skip: (req: Request) => isWhitelisted(req.ip),
     handler: (_req: Request, res: Response) => {
-      res.status(429).json({ 
-        error: 'Too many authentication attempts, please try again later.' 
-      });
+      res.status(429).json({ error: 'Too many authentication attempts, please try again later.' });
     }
   });
 }
