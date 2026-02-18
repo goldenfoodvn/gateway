@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
@@ -28,6 +28,14 @@
       <button id="btn-facebook" class="oauth-btn">
         📘 Đăng nhập với Facebook
       </button>
+      <!-- BỔ SUNG nút Zalo và WeChat (bắt đầu) -->
+      <button id="btn-zalo" class="oauth-btn">
+        💬 Đăng nhập với Zalo
+      </button>
+      <button id="btn-wechat" class="oauth-btn">
+        🟩 Đăng nhập với WeChat
+      </button>
+      <!-- BỔ SUNG nút Zalo & WeChat (kết thúc) -->
     </section>
 
     <!-- Existing sections -->
@@ -53,5 +61,14 @@
   </main>
   
   <script src="/app.js"></script>
+  <script>
+    // Nếu chưa có JS handle cho Zalo, WeChat thì thêm đoạn này vào cuối body
+    document.getElementById('btn-zalo').onclick = function() {
+      window.location.href = '/auth/zalo';
+    };
+    document.getElementById('btn-wechat').onclick = function() {
+      window.location.href = '/auth/wechat';
+    };
+  </script>
 </body>
 </html>
